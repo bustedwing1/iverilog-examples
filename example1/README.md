@@ -3,10 +3,10 @@ Intro to Verilog for Software Folk
 
 This first example implements Blinky (of course).
 
-Youtube Video
--------------
+Youtube Videos
+--------------
 
-* (https://www.youtube.com/@BustedWing)
+* https://www.youtube.com/@BustedWing
 * [iVerilog and GTKWave Intro](https://youtu.be/5A15qHDWmLY?si=aOe4LcHdFczW0A7r)
 * [Verilog for Software Engineers](https://youtu.be/Fz_bga0tyJ8?si=qy0pQ9rkW5G2q-dh)
 * [Verilog Testbench for Blinky](https://youtu.be/pnTZlvEVo28?si=6645zgLUIId43shw)
