@@ -36,7 +36,7 @@ module tb();
   // calling module's (the testbench module's) external name in parentheses. Note,
   // Verilog also supports a position port naming syntax, which is almost never
   // used (except for tool-generated netlists).  
-  apb_blinky #(8) u_blinky (
+  apb_blinky #(128) u_blinky (
     .clk     (system_clock_100mhz),
     .rst_n   (system_reset_n),
 

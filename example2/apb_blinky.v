@@ -6,7 +6,7 @@
 //------------------------------------------------------------------------------
 
 module apb_blinky #(
-  parameter NO_PARAMS  = 32  // provided for syntax example only
+  parameter DEFAULT_BLINK_RATE  = 100000000
 ) (
   input   clk,
   input   rst_n,
@@ -36,7 +36,7 @@ module apb_blinky #(
 
   always @(posedge clk) begin
     if (rst_n == 0) begin
-      blink_rate <= 32'd128;
+      blink_rate <= DEFAULT_BLINK_RATE;
       prdata   <= 32'h0;
       pready   <= 1'b0;
       perr     <= 1'b0;    
