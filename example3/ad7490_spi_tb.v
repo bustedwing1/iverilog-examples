@@ -41,7 +41,8 @@ module tb();
   // calling module's (the testbench module's) external name in parentheses. Note,
   // Verilog also supports a position port naming syntax, which is almost never
   // used (except for tool-generated netlists).  
-  ad7490_spi #(16) u_spi (
+  ad7490_spi #(16) u_spi
+  (
     .clk     (system_clock_100mhz),
     .rst_n   (system_reset_n),
 
@@ -53,10 +54,10 @@ module tb();
     .prdata  (prdata),    
     .pready  (pready),    
 
-    .spi_sclk(spi_sclk),
-    .spi_cs_n(spi_cs_n),
-    .spi_mosi(spi_mosi),  // Main to Sub
-    .spi_miso(spi_miso)   // Sub to Main
+    .sclk(spi_sclk),
+    .cs(spi_cs_n),
+    .mosi(spi_mosi),  // Main to Sub
+    .miso(spi_miso)   // Sub to Main
   );
 
 
@@ -150,7 +151,8 @@ ad7490_model ad7490_model
   integer ignore_first = 1;
   integer fail_cnt = 0;
   integer blink_rate = 300;
-  reg [31:0] adc_data_expect = 0; 
+  reg [31:0] adc_data_expect = 0;
+  reg [31:0] apb_addr = 0; 
   initial begin
   
     // SIMULATION STARTUP
@@ -166,22 +168,29 @@ ad7490_model ad7490_model
     system_reset_n = 1;
     repeat(10) @(posedge system_clock_100mhz);
 
-    // Verify that spi block defaults to not enabled
-    apb_read(32'h40000040, 0);
-    
-    // Enable spi block
-    apb_write(32'h40000040, 32'h1);
+    // Verfify ID register is working
+    apb_read(32'h40000000, 32'h12345678);
 
-    // Read-back enable bit
-    apb_read(32'h40000040, 1);
-    
+    // Verify scratch pad register
+    apb_read (32'h40000008, 0);
+    apb_write(32'h40000008, 32'hfedcba98);
+    apb_read (32'h40000008, 32'hfedcba98);
+
+    // Verify that spi block defaults to enabled
+    apb_read(32'h40000004, 1);
+    apb_write(32'h40000004, 32'h0);
+    apb_read(32'h40000004, 0);
+    apb_write(32'h40000004, 32'h1);
+    apb_read(32'h40000004, 1);
+
     // Wait to allow all 16 ADCs to be read by the SPI block
-    repeat (6500) @(posedge system_clock_100mhz);
+    repeat (20000) @(posedge system_clock_100mhz);
 
     // Read each of the 16 ADC values.
-    adc_data_expect = 'h10000; 
-    for (ii =0; ii < 64; ii = ii + 4) begin
-      apb_read(ii, adc_data_expect);
+    adc_data_expect = 'h8000; 
+    for (ii=0; ii < 16; ii = ii + 1) begin
+      apb_addr = 32'h40000040 + (4*ii);
+      apb_read(apb_addr, adc_data_expect);
       adc_data_expect = adc_data_expect + 'h111;
     end
     
