@@ -59,7 +59,7 @@ module ad7490_spi
 
       if (psel) begin
         if (paddr[7:0] >= 8'h40) begin
-          prdata <= {16'b0, adc_array[ paddr[5:2] ]};
+          prdata <= {16'ha5a5, adc_array[ paddr[5:2] ]};
         end else begin
           case (paddr[7:0])
             8'h00 : prdata <= 32'h12345678;
@@ -109,7 +109,6 @@ module ad7490_spi
       end else if (fe) begin
         shiftreg <= {shiftreg[14:0], miso};
       end
-      
       value_v <= shiftreg_v && !mosi;
       if (shiftreg_v) begin
         addr  <= shiftreg[15:12];
@@ -117,7 +116,7 @@ module ad7490_spi
       end
       
       if (value_v) begin
-        adc_array[addr] <= {4'h8, value};
+        adc_array[addr] <= {addr, value};
       end
       
     end
