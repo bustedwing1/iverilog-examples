@@ -1,5 +1,11 @@
 `timescale 1 ns /  100 ps
+
+`define NO_WAVES
+// ` define WAVES
+
 module tb();
+
+
 
   // In testbenches, I usually use 'reg' to declare the inputs to the Device
   // Under Test (DUT), and I use 'wire' to declare the DUT's outputs
@@ -27,41 +33,84 @@ module tb();
 
   // ==========================================================================
   // INSTANTIATE DEVICE UNDER TEST (DUT)
-  
-  apb_adc_fifo u_apb_adc_fifo_0
-  (
-    .clk      (system_clock_100mhz),
-    .rst_n    (system_reset_n),
-
-    .paddr    (paddr),
-    .psel     (psel),
-    .penable  (penable),
-    .pwrite   (pwrite),
-    .pwdata   (pwdata),
-    .prdata   (prdata),
-    .pready   (pready),
-      
-    .i_data   (sensor_data),
-    .i_data_v (sensor_data_valid)
-  );
 
 
-  // ==========================================================================
-  // SENSOR DATA GENERATOR
 
-  reg [3:0] clk_cnt;
-  always @(posedge system_clock_100mhz) begin
-    if (system_reset_n == 1'b0) begin
-      sensor_data <= 32'h12345000;
-      clk_cnt <= 4'h0;
-    end else begin
-      clk_cnt <= clk_cnt + 1;
-      sensor_data_valid <= (clk_cnt == 4'hF);
-      if (sensor_data_valid) begin
-        sensor_data <= sensor_data + 1;
-      end
-    end
-  end
+parameter memfile = "";
+parameter memsize = 8192;
+parameter with_csr = 1;
+parameter compressed = 0;
+parameter align = compressed;
+
+// reg [1023:0] firmware_file;
+// initial
+//   if ($value$plusargs("firmware=%s", firmware_file)) begin
+// 	$display("Loading RAM from %0s", firmware_file);
+// 	$readmemh(firmware_file, dut.ram.mem);
+//   end
+
+apb_servant
+#(.memfile  (memfile),
+  .memsize  (memsize),
+  .sim      (1),
+  .with_csr (with_csr),
+  .compress (compressed[0:0]),
+  .align    (align[0:0])
+)
+dut(
+  .wb_clk(system_clock_100mhz),
+  .wb_rst(!system_reset_n),
+
+  .paddr   (paddr),
+  .psel    (psel),
+  .penable (penable),
+  .pwrite  (pwrite),
+  .pwdata  (pwdata),
+  .prdata  (prdata),
+  .pready  (pready),
+
+  .q(q)
+);
+
+always @(q)
+begin
+  $display("q=%1d",q);
+end
+
+//   apb_serv_riscv u_apb_serv_riscv_0
+//   (
+//     .clk      (system_clock_100mhz),
+//     .rst_n    (system_reset_n),
+//
+//     .paddr    (paddr),
+//     .psel     (psel),
+//     .penable  (penable),
+//     .pwrite   (pwrite),
+//     .pwdata   (pwdata),
+//     .prdata   (prdata),
+//     .pready   (pready),
+//
+//     .i_data   (sensor_data),
+//     .i_data_v (sensor_data_valid)
+//   );
+
+
+//   // ==========================================================================
+//   // SENSOR DATA GENERATOR
+//
+//   reg [3:0] clk_cnt;
+//   always @(posedge system_clock_100mhz) begin
+//     if (system_reset_n == 1'b0) begin
+//       sensor_data <= 32'h12345000;
+//       clk_cnt <= 4'h0;
+//     end else begin
+//       clk_cnt <= clk_cnt + 1;
+//       sensor_data_valid <= (clk_cnt == 4'hF);
+//       if (sensor_data_valid) begin
+//         sensor_data <= sensor_data + 1;
+//       end
+//     end
+//   end
 
 
   // ==========================================================================
@@ -151,18 +200,31 @@ module tb();
   reg [31:0] apb_addr = 0;
   initial begin
 
+
+    system_reset_n = 0;
+    repeat(200) @(posedge system_clock_100mhz);
+    // Drive the reset high which enables the apb_spi to start working. Wait
+    // for 10 more clocks just for good measure.
+    system_reset_n = 1;
+
+
     // SIMULATION STARTUP
     // Verilog uses the $display to print text to the screen. It's syntax
     // is similar to C's printf.
     $display($time, " info: Start of Simulation ii = %d", ii);
 
     // Wait for 10 clocks, with the reset still assserted low.
-    repeat(10) @(posedge system_clock_100mhz);
+    for (ii=0; ii<100; ii = ii + 1) begin
+      repeat(1000000) @(posedge system_clock_100mhz);
+      $display("%d sec", ii);
+    end
+    
+    $display("done");
 
     // Drive the reset high which enables the apb_spi to start working. Wait
     // for 10 more clocks just for good measure.
     system_reset_n = 1;
-    
+
     apb_read (32'h40000004, 32'h00010000);
     apb_write(32'h40000004, 32'h00000000);
     apb_read (32'h40000004, 32'h00000000);
@@ -189,6 +251,8 @@ module tb();
     $finish;
   end
 
+`ifdef WAVES
+
   // ==========================================================================
   // The $dumpfile and $dumpvars commands are used to output trace waveforms.
   // Note, this initial block and the above MAIN TEST initial block both
@@ -201,6 +265,8 @@ module tb();
     $dumpfile("test.vcd");
     $dumpvars(0, tb);
   end
+  
+`endif
 
 endmodule
 

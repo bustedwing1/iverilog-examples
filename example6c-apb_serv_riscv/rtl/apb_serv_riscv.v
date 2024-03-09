@@ -1,10 +1,10 @@
 //-----------------------------------------------------------------------------
-// Block: apb_adc_fifo
+// Block: apb_serv_riscv
 // Description:
 //   This module provides a 512x32 ram that can be accessed by the APB.
 //------------------------------------------------------------------------------
 
-module apb_adc_fifo
+module apb_serv_riscv
 ( // Port List
   input   clk,
   input   rst_n,

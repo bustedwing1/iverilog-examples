@@ -11,7 +11,7 @@ Get the Code
 
 ```bash
 git clone https://github.com/bustedwing1/iverilog-examples
-cd iverilog-examples/example5-apb_adc_fifo
+cd iverilog-examples/example5-apb_serv_riscv
 ```
 
 Install iVerilog and GTKWaves
@@ -37,8 +37,8 @@ gtkwaves test.vcd
 Files
 -----
 
-* apb_adc_fifo.v - This is the synthesizable Verilog FIFO (512x32).
-* apb_adc_fifo_tb.v - This is the simulation testbench.
+* apb_serv_riscv.v - This is the synthesizable Verilog FIFO (512x32).
+* apb_serv_riscv_tb.v - This is the simulation testbench.
 * clean.sh - This script deletes unneeded files
 * compile.sh - This script compiles the verilog files
 * run.sh - This script runs the compiled executable
