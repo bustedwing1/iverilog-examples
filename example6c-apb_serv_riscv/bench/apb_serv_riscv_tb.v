@@ -1,7 +1,7 @@
 `timescale 1 ns /  100 ps
 
 `define NO_WAVES
-// ` define WAVES
+`define WAVES
 
 module tb();
 
@@ -23,7 +23,7 @@ module tb();
 
   reg [31:0] sensor_data;
   reg        sensor_data_valid;
-
+  
   // ==========================================================================
   // Generate a clock that toggles every 5nsec, resulting in a 100MHz pulsing
   // clock with a 50% duty cycle
@@ -211,7 +211,35 @@ end
     // SIMULATION STARTUP
     // Verilog uses the $display to print text to the screen. It's syntax
     // is similar to C's printf.
-    $display($time, " info: Start of Simulation ii = %d", ii);
+    $display($time, " info: Loading SERV ii = %d", ii);
+    apb_write(32'h40040000, 32'h40000537);
+    apb_write(32'h40040004, 32'h00050513);
+    apb_write(32'h40040008, 32'h01000313);
+    apb_write(32'h4004000c, 32'h00000293);
+    apb_write(32'h40040010, 32'h00550023);
+    apb_write(32'h40040014, 32'h0012C293);
+    apb_write(32'h40040018, 32'h000073B3);
+    apb_write(32'h4004001c, 32'h00138393);
+    apb_write(32'h40040020, 32'hFE731EE3);
+    apb_write(32'h40040024, 32'hFEDFF06F);
+    apb_write(32'h40040028, 32'h00000000);
+
+    apb_read(32'h40040000, 32'h40000537);
+    apb_read(32'h40040004, 32'h00050513);
+    apb_read(32'h40040008, 32'h01000313);
+    apb_read(32'h4004000c, 32'h00000293);
+    apb_read(32'h40040010, 32'h00550023);
+    apb_read(32'h40040014, 32'h0012C293);
+    apb_read(32'h40040018, 32'h000073B3);
+    apb_read(32'h4004001c, 32'h00138393);
+    apb_read(32'h40040020, 32'hFE731EE3);
+    apb_read(32'h40040024, 32'hFEDFF06F);
+    apb_read(32'h40040028, 32'h00000000);
+
+    $display($time, " info: Start SERV ii = %d", ii);
+
+    repeat(200) @(posedge system_clock_100mhz);
+    apb_write(32'h4004FFFC, 32'h00000000);
 
     // Wait for 10 clocks, with the reset still assserted low.
     for (ii=0; ii<100; ii = ii + 1) begin
