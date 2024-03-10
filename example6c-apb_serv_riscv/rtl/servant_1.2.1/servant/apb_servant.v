@@ -1,4 +1,4 @@
-// // // `default_nettype none
+// `default_nettype none
 module apb_servant
 (
  input wire  wb_clk,
@@ -15,8 +15,8 @@ module apb_servant
 
  output wire q);
 
-   parameter memfile = "../../blinky.hex";
-   parameter memsize = 8192;
+   parameter memfile = ""; // """../../blinky.hex";
+   parameter memsize = 512; // 8192;
    parameter reset_strategy = "MINI";
    parameter sim = 0;
    parameter with_csr = 1;

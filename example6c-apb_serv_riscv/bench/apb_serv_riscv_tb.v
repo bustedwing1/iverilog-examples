@@ -37,7 +37,7 @@ module tb();
 
 
 parameter memfile = "";
-parameter memsize = 8192;
+parameter memsize = 512;
 parameter with_csr = 1;
 parameter compressed = 0;
 parameter align = compressed;
@@ -239,7 +239,12 @@ end
     $display($time, " info: Start SERV ii = %d", ii);
 
     repeat(200) @(posedge system_clock_100mhz);
-    apb_write(32'h4004FFFC, 32'h00000000);
+    apb_read    (32'h40040100, 32'h00000001);
+    apb_write   (32'h40040100, 32'h00000FFF);
+    apb_read    (32'h40040100, 32'h00000FFF);
+//     apb_write(32'h4004FFFC, 32'h00000000);
+    apb_write   (32'h40040100, 32'h00000000);
+    apb_read    (32'h40040100, 32'h00000000);
 
     // Wait for 10 clocks, with the reset still assserted low.
     for (ii=0; ii<100; ii = ii + 1) begin

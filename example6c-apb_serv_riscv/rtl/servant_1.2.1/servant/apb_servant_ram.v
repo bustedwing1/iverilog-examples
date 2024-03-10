@@ -36,50 +36,65 @@ module apb_servant_ram
    wire [aw-3:0] 	addr = i_wb_adr[aw-1:2];
 
    wire [aw-3:0]        apb_addr   = paddr[aw-1:2];
-   wire                 apb_we     = psel && penable && pwrite;
    wire                 apb_mem_we = psel && penable && pwrite;
-   wire                 apb_csr_we = psel && penable && pwrite && (paddr[15:0] == 16'hfffc);
+   wire                 apb_mem_re = psel && !pwrite;
+   wire                 apb_csr_we = psel && penable && pwrite && (paddr[15:0] == 16'h0100);
+   wire                 apb_csr_re = psel && (paddr[15:0] == 16'h0100);
    reg  [31:0]          csr;
-   
+
    assign o_soft_reset = csr[0];
 
    assign perr = 1'b0;
+
+
    always @(posedge i_wb_clk)
    begin
      pready <= psel && !penable;
 
      if (i_wb_rst) begin
-       csr <= 32'h1;     
+       csr <= 32'h1;
      end else if (apb_csr_we) begin
        csr <= pwdata;
      end
-     
-     if (apb_we) begin
-       mem[apb_addr] <= pwdata;
+   end
+
+
+   wire [aw-3:0] maddr  =  psel ? apb_addr : addr;
+   wire          mwe    =  psel ? apb_mem_we : we;
+   wire [31:0]   mwdata =  psel ? pwdata : i_wb_dat;
+   wire [31:0]   mrdata =  mem[maddr];
+
+   always @(posedge i_wb_clk)
+   begin
+     if (mwe) begin
+       mem[maddr] <= mwdata;
      end
-     if (psel) begin
-       prdata <= mem[apb_addr];
-     end else begin
-       prdata <= 32'h0;
-     end 
    end
 
    always @(posedge i_wb_clk)
+   begin
      if (i_wb_rst & (RESET_STRATEGY != "NONE"))
        o_wb_ack <= 1'b0;
-     else
+     else begin
        o_wb_ack <= i_wb_cyc & !o_wb_ack;
+     end
 
-   always @(posedge i_wb_clk) begin
-      if (we[0]) mem[addr][7:0]   <= i_wb_dat[7:0];
-      if (we[1]) mem[addr][15:8]  <= i_wb_dat[15:8];
-      if (we[2]) mem[addr][23:16] <= i_wb_dat[23:16];
-      if (we[3]) mem[addr][31:24] <= i_wb_dat[31:24];
-      o_wb_rdt <= mem[addr];
+     o_wb_rdt <= mrdata;
+     if (apb_csr_re) begin
+       prdata <= csr;
+     end else if (apb_mem_re) begin
+       prdata <= mrdata;
+     end else begin
+       prdata <= 32'h0;
+     end
    end
 
 
-//     always @ (posedge i_wb_clk)
+//
+//
+//
+//
+// //     always @ (posedge i_wb_clk)
 //     begin
 //       case (addr)
 //         o_wb_rdt <= mem[addr];
@@ -113,7 +128,7 @@ module apb_servant_ram
 //         11'd8 : o_wb_rdt <= 32'hFE731EE3;
 //         11'd9 : o_wb_rdt <= 32'hFEDFF06F;
 //         11'd10: o_wb_rdt <= 32'h00000000;
-// `endif        
+// `endif
 //         default: o_wb_rdt <= 32'h00000000;
 //       endcase
 //     end // always

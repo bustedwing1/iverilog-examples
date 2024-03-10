@@ -1,17 +1,15 @@
 Verilog Example 5 - APB ADC FIFO
 ============================================
 
-This example develops a FIFO that is can be accessed by the APB bus.
-Data is written into the FIFO from a data source such as an ADC.
-Data is read by the processor via APB.  For higher speed data, consider
-using the AXI bus.
+This example allows the external processor (using APB) to load the
+SERV's memory.
 
 Get the Code
 ------------
 
 ```bash
 git clone https://github.com/bustedwing1/iverilog-examples
-cd iverilog-examples/example5-apb_serv_riscv
+cd iverilog-examples/example6c-apb_serv_riscv
 ```
 
 Install iVerilog and GTKWaves
@@ -29,8 +27,8 @@ Run iVerilog Simulator
 ----------------------
 
 ```bash
-./compile.sh
-./run.sh
+./scripts/compile_iverilog.sh 
+./scripts/sim_iverilog.sh 
 gtkwaves test.vcd
 ```
 
