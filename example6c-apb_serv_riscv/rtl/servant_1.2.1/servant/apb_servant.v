@@ -36,9 +36,6 @@ module apb_servant
    localparam	   rf_width = 2;
    localparam	   rf_l2d   = $clog2((32+csr_regs)*32/rf_width);
 
-   wire         soft_reset;
-   wire         rst = wb_rst || soft_reset;
-
    wire 	timer_irq;
 
    wire [31:0] 	wb_mem_adr;
@@ -77,7 +74,7 @@ module apb_servant
    servant_mux servant_mux
      (
       .i_clk (wb_clk),
-      .i_rst (rst & (reset_strategy != "NONE")),
+      .i_rst (wb_rst & (reset_strategy != "NONE")),
       .i_wb_cpu_adr (wb_ext_adr),
       .i_wb_cpu_dat (wb_ext_dat),
       .i_wb_cpu_sel (wb_ext_sel),
@@ -113,7 +110,6 @@ module apb_servant
       .pwdata  (pwdata),
       .prdata  (prdata),
       .pready  (pready),
-      .o_soft_reset (soft_reset),
 
       .i_wb_adr (wb_mem_adr[$clog2(memsize)-1:2]),
       .i_wb_cyc (wb_mem_stb),
@@ -128,7 +124,7 @@ module apb_servant
        .WIDTH (32))
    timer
      (.i_clk    (wb_clk),
-      .i_rst    (rst),
+      .i_rst    (wb_rst),
       .o_irq    (timer_irq),
       .i_wb_cyc (wb_timer_stb),
       .i_wb_we  (wb_timer_we) ,
@@ -164,7 +160,7 @@ module apb_servant
    cpu
      (
       .i_clk        (wb_clk),
-      .i_rst        (rst),
+      .i_rst        (wb_rst),
       .i_timer_irq  (timer_irq),
 
       .o_wb_mem_adr   (wb_mem_adr),

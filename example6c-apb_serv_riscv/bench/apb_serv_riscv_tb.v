@@ -23,6 +23,7 @@ module tb();
 
   reg [31:0] sensor_data;
   reg        sensor_data_valid;
+  reg        serv_rst = 1'b1;
   
   // ==========================================================================
   // Generate a clock that toggles every 5nsec, resulting in a 100MHz pulsing
@@ -59,7 +60,7 @@ apb_servant
 )
 dut(
   .wb_clk(system_clock_100mhz),
-  .wb_rst(!system_reset_n),
+  .wb_rst(serv_rst),
 
   .paddr   (paddr),
   .psel    (psel),
@@ -207,6 +208,10 @@ end
     // for 10 more clocks just for good measure.
     system_reset_n = 1;
 
+    repeat(200) @(posedge system_clock_100mhz);
+
+    serv_rst = 1'b1; 
+    repeat(200) @(posedge system_clock_100mhz);
 
     // SIMULATION STARTUP
     // Verilog uses the $display to print text to the screen. It's syntax
@@ -239,14 +244,8 @@ end
     $display($time, " info: Start SERV ii = %d", ii);
 
     repeat(200) @(posedge system_clock_100mhz);
-    apb_read    (32'h40040100, 32'h00000001);
-    apb_write   (32'h40040100, 32'h00000FFF);
-    apb_read    (32'h40040100, 32'h00000FFF);
-//     apb_write(32'h4004FFFC, 32'h00000000);
-    apb_write   (32'h40040100, 32'h00000000);
-    apb_read    (32'h40040100, 32'h00000000);
-
-    // Wait for 10 clocks, with the reset still assserted low.
+    serv_rst = 1'b0; 
+    // Q should now be blinking
     for (ii=0; ii<100; ii = ii + 1) begin
       repeat(1000000) @(posedge system_clock_100mhz);
       $display("%d sec", ii);

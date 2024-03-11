@@ -1,7 +1,5 @@
 // default_nettype none
 
-`define BLINKY_FAST
-
 module apb_servant_ram
   #(//Memory parameters
     parameter depth = 256,
@@ -19,7 +17,6 @@ module apb_servant_ram
     output reg [31:0] prdata,
     output reg        pready,
     output        perr,
-    output        o_soft_reset,
 
     input wire [aw-1:2] i_wb_adr,
     input wire [31:0] 	i_wb_dat,
@@ -38,11 +35,8 @@ module apb_servant_ram
    wire [aw-3:0]        apb_addr   = paddr[aw-1:2];
    wire                 apb_mem_we = psel && penable && pwrite;
    wire                 apb_mem_re = psel && !pwrite;
-   wire                 apb_csr_we = psel && penable && pwrite && (paddr[15:0] == 16'h0100);
-   wire                 apb_csr_re = psel && (paddr[15:0] == 16'h0100);
-   reg  [31:0]          csr;
 
-   assign o_soft_reset = csr[0];
+   wire   sel_apb = i_wb_rst;
 
    assign perr = 1'b0;
 
@@ -50,18 +44,12 @@ module apb_servant_ram
    always @(posedge i_wb_clk)
    begin
      pready <= psel && !penable;
-
-     if (i_wb_rst) begin
-       csr <= 32'h1;
-     end else if (apb_csr_we) begin
-       csr <= pwdata;
-     end
    end
 
 
-   wire [aw-3:0] maddr  =  psel ? apb_addr : addr;
-   wire          mwe    =  psel ? apb_mem_we : we;
-   wire [31:0]   mwdata =  psel ? pwdata : i_wb_dat;
+   wire [aw-3:0] maddr  =  sel_apb ? apb_addr : addr;
+   wire          mwe    =  sel_apb ? apb_mem_we : we;
+   wire [31:0]   mwdata =  sel_apb ? pwdata : i_wb_dat;
    wire [31:0]   mrdata =  mem[maddr];
 
    always @(posedge i_wb_clk)
@@ -80,9 +68,7 @@ module apb_servant_ram
      end
 
      o_wb_rdt <= mrdata;
-     if (apb_csr_re) begin
-       prdata <= csr;
-     end else if (apb_mem_re) begin
+     if (apb_mem_re) begin
        prdata <= mrdata;
      end else begin
        prdata <= 32'h0;
@@ -90,15 +76,13 @@ module apb_servant_ram
    end
 
 
-//
-//
-//
-//
-// //     always @ (posedge i_wb_clk)
+
+//     always @ (posedge i_wb_clk)
 //     begin
+// //        o_wb_rdt <= mem[addr];
 //       case (addr)
-//         o_wb_rdt <= mem[addr];
 //
+// `define BLINKY_SLOW
 //
 // `ifdef BLINKY_FAST
 // // blink_fast.hex
