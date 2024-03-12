@@ -75,7 +75,7 @@ dut(
 
 always @(q)
 begin
-  $display("q=%1d",q);
+  $display($time, ": Q = %1d",q);
 end
 
 //   apb_serv_riscv u_apb_serv_riscv_0
@@ -216,7 +216,7 @@ end
     // SIMULATION STARTUP
     // Verilog uses the $display to print text to the screen. It's syntax
     // is similar to C's printf.
-    $display($time, " info: Loading SERV ii = %d", ii);
+    $display($time, " info: Loading SERV memory with blinky_fast.hex");
     apb_write(32'h40040000, 32'h40000537);
     apb_write(32'h40040004, 32'h00050513);
     apb_write(32'h40040008, 32'h01000313);
@@ -229,6 +229,7 @@ end
     apb_write(32'h40040024, 32'hFEDFF06F);
     apb_write(32'h40040028, 32'h00000000);
 
+    $display($time, " info: Reading back SERV");
     apb_read(32'h40040000, 32'h40000537);
     apb_read(32'h40040004, 32'h00050513);
     apb_read(32'h40040008, 32'h01000313);
@@ -245,13 +246,12 @@ end
 
     repeat(200) @(posedge system_clock_100mhz);
     serv_rst = 1'b0; 
+
     // Q should now be blinking
-    for (ii=0; ii<100; ii = ii + 1) begin
-      repeat(1000000) @(posedge system_clock_100mhz);
-      $display("%d sec", ii);
-    end
+    repeat(50000) @(posedge system_clock_100mhz);
     
     $display("done");
+    $finish;
 
     // Drive the reset high which enables the apb_spi to start working. Wait
     // for 10 more clocks just for good measure.
