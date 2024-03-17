@@ -35,20 +35,22 @@ module tb();
   // ==========================================================================
   // INSTANTIATE DEVICE UNDER TEST (DUT)
 
-
-
 parameter memfile = "";
 parameter memsize = 512;
 parameter with_csr = 1;
 parameter compressed = 0;
 parameter align = compressed;
 
-// reg [1023:0] firmware_file;
-// initial
-//   if ($value$plusargs("firmware=%s", firmware_file)) begin
-// 	$display("Loading RAM from %0s", firmware_file);
-// 	$readmemh(firmware_file, dut.ram.mem);
-//   end
+reg [1023:0] program_file;
+reg [31:0]   testmem[0:4096];
+initial begin
+  if ($value$plusargs("program=%s", program_file)) begin
+    $display("Loading program from %0s", program_file);
+    $readmemh(program_file, testmem);
+  end
+end
+
+wire [31:0] qbus;
 
 apb_servant
 #(.memfile  (memfile),
@@ -70,13 +72,19 @@ dut(
   .prdata  (prdata),
   .pready  (pready),
 
+  .qbus(qbus),
   .q(q)
 );
 
-always @(q)
+always @(qbus)
 begin
-  $display($time, ": Q = %1d",q);
+  $display($time, ": Qbus = 0x%08x",qbus);
 end
+
+// always @(q)
+// begin
+//   $display($time, ": Q = %1d",q);
+// end
 
 //   apb_serv_riscv u_apb_serv_riscv_0
 //   (
@@ -216,18 +224,39 @@ end
     // SIMULATION STARTUP
     // Verilog uses the $display to print text to the screen. It's syntax
     // is similar to C's printf.
-    $display($time, " info: Loading SERV memory with blinky_fast.hex");
-    apb_write(32'h40040000, 32'h40000537);
-    apb_write(32'h40040004, 32'h00050513);
-    apb_write(32'h40040008, 32'h01000313);
-    apb_write(32'h4004000c, 32'h00000293);
-    apb_write(32'h40040010, 32'h00550023);
-    apb_write(32'h40040014, 32'h0012C293);
-    apb_write(32'h40040018, 32'h000073B3);
-    apb_write(32'h4004001c, 32'h00138393);
-    apb_write(32'h40040020, 32'hFE731EE3);
-    apb_write(32'h40040024, 32'hFEDFF06F);
-    apb_write(32'h40040028, 32'h00000000);
+    $display($time, " info: Loading SERV memory with serv-counter.readmemh");
+
+    
+    for (ii=0; testmem[ii]!=0; ii=ii+1) begin
+      apb_write(32'h40040000+4*ii, testmem[ii]);
+    end
+
+
+//     apb_write(32'h40040000, 32'hff010113);
+//     apb_write(32'h40040004, 32'h00812623);
+//     apb_write(32'h40040008, 32'h01010413);
+//     apb_write(32'h4004000c, 32'h02c02783);
+//     apb_write(32'h40040010, 32'h00178713);
+//     apb_write(32'h40040014, 32'h02e02623);
+//     apb_write(32'h40040018, 32'h02802783);
+//     apb_write(32'h4004001c, 32'h02c02703);
+//     apb_write(32'h40040020, 32'h00e7a023);
+//     apb_write(32'h40040024, 32'hfe9ff06f);
+//     apb_write(32'h40040028, 32'h40000000);
+//     apb_write(32'h4004002c, 32'h00000000);
+
+//     $display($time, " info: Loading SERV memory with blinky_fast.hex");
+//     apb_write(32'h40040000, 32'h40000537);
+//     apb_write(32'h40040004, 32'h00050513);
+//     apb_write(32'h40040008, 32'h01000313);
+//     apb_write(32'h4004000c, 32'h00000293);
+//     apb_write(32'h40040010, 32'h00550023);
+//     apb_write(32'h40040014, 32'h0012C293);
+//     apb_write(32'h40040018, 32'h000073B3);
+//     apb_write(32'h4004001c, 32'h00138393);
+//     apb_write(32'h40040020, 32'hFE731EE3);
+//     apb_write(32'h40040024, 32'hFEDFF06F);
+//     apb_write(32'h40040028, 32'h00000000);
 
     $display($time, " info: Reading back SERV");
     apb_read(32'h40040000, 32'h40000537);
@@ -248,7 +277,7 @@ end
     serv_rst = 1'b0; 
 
     // Q should now be blinking
-    repeat(50000) @(posedge system_clock_100mhz);
+    repeat(60000) @(posedge system_clock_100mhz);
     
     $display("done");
     $finish;
@@ -267,7 +296,6 @@ end
       apb_read(32'h40000000, 32'h12345000 + ii);
     end
 
-    // Wait to allow all 16 ADCs to be read by the SPI block
     repeat (200) @(posedge system_clock_100mhz);
 
     $display("\n===================================================================================\n");
