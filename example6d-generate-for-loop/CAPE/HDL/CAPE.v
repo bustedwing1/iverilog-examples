@@ -3,8 +3,6 @@
 // Version: 2022.3 2022.3.0.8
 //////////////////////////////////////////////////////////////////////
 
-`timescale 1ns / 100ps
-
 // CAPE
 module CAPE(
     // Inputs
@@ -258,13 +256,14 @@ wire           P9_41;
 wire           P9_42;
 wire           PCLK;
 wire           PRESETN;
+wire   [31:0]  BLINK_BUS;
 wire           BLINK;
 wire           BLINK2;
 wire   [31:0]  APB_SLAVE_PRDATA_net_0;
 wire   [27:0]  GPIO_IN_net_1;
 wire   [46:31] GPIO_IN_slice_0;
 wire   [46:3]  GPIO_OE_net_0;
-wire   [46:3]  GPIO_OUT_net_0;
+wire   [46:3]  GPIO_OUT_net_0; // 44bits???
 wire   [46:3]  GPIO_IN_net_2;
 //--------------------------------------------------------------------
 // TiedOff Nets
@@ -316,10 +315,13 @@ assign GPIO_IN_slice_0 = GPIO_IN_net_2[46:31];
 // Concatenation assignments
 //--------------------------------------------------------------------
 // assign GPIO_OE_net_0  = { 16'h0000 , GPIO_OE };
-// assign GPIO_OUT_net_0 = { 16'h0000 , GPIO_OUT };
+// assign GPIO_OUT_net_0 = { 16'h0000 , GPIO_OUT }; = 16+28 = 44bits
 
-assign GPIO_OE_net_0 = { 16'h0000, GPIO_OE[27:7], 2'b11, GPIO_OE[4:0] };     
-assign GPIO_OUT_net_0 = { 16'h0000 , GPIO_OUT[27:7], BLINK2, BLINK, GPIO_OUT[4:0] };
+// assign GPIO_OE_net_0 = { 16'h0000, GPIO_OE[27:7], 2'b11, GPIO_OE[4:0] };     
+// assign GPIO_OUT_net_0 = { 16'h0000 , GPIO_OUT[27:7], BLINK2, BLINK, GPIO_OUT[4:0] };
+
+assign GPIO_OE_net_0 =  { 16'h0000, GPIO_OE [27:15], 12'hfff,          GPIO_OE [2:0] }; // 16+13+12+3 44 bits     
+assign GPIO_OUT_net_0 = { 16'h0000, GPIO_OUT[27:15], BLINK_BUS[27:16], GPIO_OUT[2:0] };
 
 // //--------------------------------------------------------------------
 // Bus Interface Nets Assignments - Unequal Pin Widths
@@ -368,6 +370,14 @@ apb_blinky apb_blinky_0(
         .paddr   ( APB_SLAVE_SLAVE_PADDR  ),
         .pwdata  ( APB_SLAVE_SLAVE_PWDATA ),
         .prdata  ( apb_blinky_rdata ),
+        .led     ( ) // )( BLINK2 ) 
+        );
+
+
+// INSTANTIATING A VHDL ENTITY INTO A VERILOG WRAPPER (CAPE.V)
+blinky_vhdl blinky_vhdl_0(
+        .clk     ( PCLK ),
+        .rst_n   ( PRESETN ),
         .led     ( BLINK2 ) 
         );
 
@@ -449,6 +459,7 @@ servant_0
  .paddr    ( APB_SLAVE_SLAVE_PADDR  ),
  .pwdata   ( APB_SLAVE_SLAVE_PWDATA ),
  .prdata   ( apb_serv_rdata ),
+ .qbus     ( BLINK_BUS ),
  .q        ( BLINK )
 );
 

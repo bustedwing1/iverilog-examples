@@ -13,6 +13,7 @@ module apb_servant
  output        pready,
  output        perr,
 
+ output [31:0] qbus,
  output wire q);
 
    parameter memfile = ""; // """../../blinky.hex";
@@ -46,7 +47,7 @@ module apb_servant
    wire [31:0] 	wb_mem_rdt;
    wire 	wb_mem_ack;
 
-   wire 	wb_gpio_dat;
+   wire [31:0]	wb_gpio_dat;
    wire 	wb_gpio_we;
    wire 	wb_gpio_stb;
    wire 	wb_gpio_rdt;
@@ -137,6 +138,7 @@ module apb_servant
       .i_wb_we  (wb_gpio_we),
       .i_wb_cyc (wb_gpio_stb),
       .o_wb_rdt (wb_gpio_rdt),
+      .o_gpiobus(qbus),
       .o_gpio   (q));
 
    serv_rf_ram
