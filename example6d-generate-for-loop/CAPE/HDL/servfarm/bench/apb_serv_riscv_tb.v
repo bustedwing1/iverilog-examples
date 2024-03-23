@@ -52,17 +52,10 @@ end
 
 wire [31:0] qbus;
 
-apb_servant
-#(.memfile  (memfile),
-  .memsize  (memsize),
-  .sim      (1),
-  .with_csr (with_csr),
-  .compress (compressed[0:0]),
-  .align    (align[0:0])
-)
-dut(
-  .wb_clk(system_clock_100mhz),
-  .wb_rst(serv_rst),
+servfarm dut
+(
+  .clk      (system_clock_100mhz),
+  .rst_n    (system_reset_n),
 
   .paddr   (paddr),
   .psel    (psel),
@@ -72,9 +65,32 @@ dut(
   .prdata  (prdata),
   .pready  (pready),
 
-  .qbus(qbus),
-  .q(q)
+  .qbus(qbus)
 );
+
+// apb_servant
+// #(.memfile  (memfile),
+//   .memsize  (memsize),
+//   .sim      (1),
+//   .with_csr (with_csr),
+//   .compress (compressed[0:0]),
+//   .align    (align[0:0])
+// )
+// dut(
+//   .wb_clk(system_clock_100mhz),
+//   .wb_rst(serv_rst),
+//
+//   .paddr   (paddr),
+//   .psel    (psel),
+//   .penable (penable),
+//   .pwrite  (pwrite),
+//   .pwdata  (pwdata),
+//   .prdata  (prdata),
+//   .pready  (pready),
+//
+//   .qbus(qbus),
+//   .q(q)
+// );
 
 always @(qbus)
 begin
@@ -274,7 +290,8 @@ end
     $display($time, " info: Start SERV ii = %d", ii);
 
     repeat(200) @(posedge system_clock_100mhz);
-    serv_rst = 1'b0; 
+    serv_rst = 1'b0;
+    apb_write(32'h40048004, 32'hFFFFFFFE);
 
     // Q should now be blinking
     repeat(60000) @(posedge system_clock_100mhz);

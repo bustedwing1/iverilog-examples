@@ -441,18 +441,11 @@ parameter with_csr = 1;
 parameter compressed = 0;
 parameter align = compressed;
 
-apb_servant
-#(.memfile  (memfile),
-  .memsize  (memsize),
-  .sim      (1),
-  .with_csr (with_csr),
-  .compress (compressed[0:0]),
-  .align    (align[0:0])
-)
-servant_0
+
+servfarm servfarm_0
 (
- .wb_clk   ( PCLK ),
- .wb_rst   ( serv_rst ),
+ .clk      ( PCLK ),
+ .rst_n    ( PRESETN ),
  .psel     ( sel_apb_serv ),
  .penable  ( APB_SLAVE_SLAVE_PENABLE ),
  .pwrite   ( APB_SLAVE_SLAVE_PWRITE ),
